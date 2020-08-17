@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.kgc.mybatisdemo.dao.DynamicMapper">
+
+    <!--set 标签可以去除一些多余的逗号-->
+    <update id="updateUserByDynamic">
+        update smbms_user
+        <set>
+            <if test="userName != null and userName !=''">
+                userName =#{userName},
+            </if>
+            <if test="userPassword !=null and userPassword !=''">
+                userPassword =#{userPassword},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <!--trim 标签功能强大的标签
+            prefix  是拼接前缀，在sql语句前面拼接前缀
+            suffix  是拼接后缀，在sql语句后面拼接后缀
+            suffixOverrides  是忽略指定的字符在sql语句的末尾
+            prefixOverrides  是忽略指定的字符在sql语句的开始部分  比如 and或or
+    -->
+    <update id="updateUserByDynamicTrim">
+        update smbms_user
+        <trim prefix="set" suffixOverrides="," suffix="where id=#{id}">
+            <if test="userName !=null and userName !=''">
+                userName=#{userName},
+            </if>
+            <if test="userPassword !=null and userPassword !=''">
+                userPassword=#{userPassword},
+            </if>
+        </trim>
+    </update>
+
+    <!--where 标签 其实就是我们常见的where关键字，与其不同的是where标签可以智能的去除一些多余的and或者or-->
+    <!--if 判断条件必须要写test，当test条件为真时，才能拼接其中的sql语句-->
+    <select id="dynamicTest1if" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user
+        <where>
+            <if test="userName !=null and userName !=''">
+                and userName like concat('%',#{userName},'%')
+            </if>
+            <if test="roleid!=null">
+                and userRole =#{roleid}
+            </if>
+        </where>
+    </select>
+
+    <!-- collection默认有三个值 分别是 array list 和map的键
+        open 是开始便利的前置符号
+        separator 是每个元素之间的分隔符
+        close 是结束遍历的结束符号
+    -->
+    <select id="queryByForeach_array" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user where userRole in
+        <foreach collection="array" open="(" separator="," close=")" item="item">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryUserByForeachList" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user where userRole in
+            <foreach collection="list" item="item" open="(" separator="," close=" )">
+                #{item}
+            </foreach>
+    </select>
+
+    <!-- TODO 当foreach 的值为map时一定要对好map的键名否则参数传递不正确!!!
+        这也是为什么map用的不多得原因
+    -->
+    <select id="queryUserByForeachMap" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user where userRole in
+            <foreach collection="roleId" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+                and gender=#{gender}
+    </select>
+
+    <select id="queryByChoose" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user where
+            /*choose 的工作机制类似于java中的switch when就是case  otherwise 是默认选项*/
+        <choose>
+            <when test="userName !=null and userName !=''">
+                userName like concat('%',#{userName},'%')
+            </when>
+            <when test="userRole !=null">
+                userRole =#{userRole}
+            </when>
+            <otherwise>
+                1=1
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryUserPage" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select * from smbms_user limit #{currentPage}, #{pageSize}
+    </select>
+</mapper>

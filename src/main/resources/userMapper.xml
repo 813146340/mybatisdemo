@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--在mapper 配置文件中 必须指定一个命名空间！！ 一个mapper文件指向一个接口-->
+<mapper namespace="cn.kgc.mybatisdemo.dao.UserMapper">
+    <cache/>
+
+    <insert id="addUser">
+        insert into smbms_user(usercode, username, userpassword)
+        values (#{userCode}, #{userName}, #{userPassword});
+    </insert>
+
+    <!--增删改所有的标签不写resultType 和resultMap 因为全部都规定好了 只返回数字-->
+    <update id="updateUser">
+        update smbms_user
+        set userName =#{userName}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteUser">
+        delete
+        from smbms_user
+        where id = #{userId}
+    </delete>
+
+    <!--select 查询标签 id必须要和接口的方法名相同-->
+    <select id="queryUser" resultType="cn.kgc.mybatisdemo.pajo.User">
+        /*sql语句*/
+        select *
+        from smbms_user;
+    </select>
+    <!--/*在mybatis中方法注入有两种方式，一个是#{} (使用的是占位符进行替换) 另一个是${} (使用的是字符串拼接) TODO 请使用#{}*/-->
+    <!-- id:唯一标识，要与接口中的方法名相同
+         resultType:指定当前方法的返回类型
+         parameterType:指定参数类型
+         cancat() 是进行字符串拼接
+     -->
+    <select id="queryUserByUserName" resultType="cn.kgc.mybatisdemo.pajo.User" parameterType="string">
+        select id, userCode, userPassword, userName
+        from smbms_user
+        where userName like concat('%', #{userName}, '%');
+    </select>
+
+    <select id="queryUserByUserNameAndRoleId" resultType="cn.kgc.mybatisdemo.pajo.User">
+        select id, userCode, userPassword, userName
+        from smbms_user
+        where userName like concat('%', #{userName}, '%')
+          and userRole = #{roleId};
+    </select>
+
+    <!--当参数类型为对象时，#{}中的参数名称必须要和所传对象中的属性名相同-->
+    <!--TODO 需要注意的是 resultMap和resuleType不能同时存在一个标签中，一山容不得二虎！-->
+    <select id="quryUserByObject" resultMap="userRoleMap">
+        select smbms_user.id, userCode, userPassword, userName, smbms_role.roleName
+        from smbms_user,
+             smbms_role
+        where smbms_user.userRole = smbms_role.id
+          and userName like concat('%', #{userName}, '%')
+          and userRole = #{userRole}
+    </select>
+
+
+    <select id="queryUserByRoleId" resultMap="associationUser">
+        select smbms_user.id,
+               smbms_user.userName,
+               smbms_user.userPassword,
+               smbms_role.id as roleId,
+               smbms_role.roleName,
+               smbms_role.roleCode
+        from smbms_user,
+             smbms_role
+        where smbms_user.userRole = smbms_role.id
+          and smbms_role.id = #{roleId}
+    </select>
+    <!--一对一关系映射-->
+    <resultMap id="associationUser" type="user">
+        <id column="id" property="id"/>
+        <result property="userName" column="userName"/>
+        <result property="userPassword" column="userPassword"/>
+        <!--一对一绑定-->
+        <association property="role" resultMap="role"/>
+    </resultMap>
+    <resultMap id="role" type="cn.kgc.mybatisdemo.pajo.Role">
+        <id property="id" column="roleId"/>
+        <result property="roleName" column="roleName"/>
+        <result property="roleCode" column="roleCode"/>
+    </resultMap>
+
+
+    <!--一对多关系映射-->
+    <select id="queryUserAddressListByUserId" resultMap="collectionUser">
+        select smbms_user.id,
+               smbms_user.userName,
+               smbms_user.userPassword,
+               smbms_address.id as addressid,
+               smbms_address.contact,
+               smbms_address.addressDesc
+        from smbms_user,
+             smbms_address
+        where smbms_user.id = smbms_address.userId
+          and smbms_user.id = #{userId};
+    </select>
+    <resultMap id="collectionUser" type="user">
+        <id property="id" column="id"/>
+        <result property="userName" column="userName"/>
+        <result property="userPassword" column="userPassword"/>
+        <!--一对多关系映射-->
+        <collection property="addressList" resultMap="address"/>
+    </resultMap>
+    <resultMap id="address" type="cn.kgc.mybatisdemo.pajo.Address">
+        <id property="id" column="addressid"/>
+        <result property="contact" column="contact"/>
+        <result property="addressDesc" column="addressDesc"/>
+    </resultMap>
+
+    <!--手动映射字段  id在当前的配置文件必须是唯一的！！！！type是你要手动映射的类型-->
+    <!--当数据库中的返回的字段和java中类的属性不能一一对应时 就要使用resuleMap了-->
+    <resultMap id="userRoleMap" type="user">
+        <!--id 时表示这个类中的逐渐，可以提高一定的查询效率-->
+        <id property="id" column="id"/>
+        <!--property 是java中的属性名 column 是数据库中返回的字段名-->
+        <result property="userName" column="userName"/>
+        <result property="userRoleName" column="roleName"/>
+    </resultMap>
+</mapper>

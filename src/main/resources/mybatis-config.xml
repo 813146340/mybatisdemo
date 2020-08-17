@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--TODO 引入外部的配置文件   引入外部配置文件的优先级要高于内部配置-->
+    <properties resource="db.properties"></properties>
+
+    <settings>
+        <!--关闭自动映射 Partial默认匹配所有-->
+        <!--<setting name="autoMappingBehavior" value="NONE"/>-->
+        <!--开启缓存-->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+    <!--给实体类起别名-->
+    <typeAliases>
+        <!--给指定包下面的所有类起别名  默认名称是类得名称-->
+        <!--<package name="cn.kgc.mybatisdemo.pajo"/>-->
+        <!--给指定的类起别名 alias 起一个名字-->
+        <typeAlias type="cn.kgc.mybatisdemo.pajo.User" alias="user"/>
+    </typeAliases>
+
+    <!--配置环境变量，在mybatis中可以设置多个环境变量
+        比如开发环境，生成环境，和测试环境都可以创建一个自己独有的环境变量
+        通过default来指定当前项目使用什么环境变量
+    -->
+    <environments default="development">
+        <!--TODO 这里的id是唯一的-->
+        <environment id="development">
+            <transactionManager type="JDBC"></transactionManager>
+            <dataSource type="POOLED">
+                <!--将配置文件的属性读取进来   通过属性名获取到对应的属性值-->
+                <property name="driver" value="${driver}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+                <property name="url" value="${url}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <!--mappers 是用来配置和注册映射文件的-->
+    <mappers>
+        <mapper resource="userMapper.xml"/>
+        <mapper resource="dynamicMapper.xml"/>
+    </mappers>
+</configuration>
